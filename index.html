@@ -177,6 +177,45 @@
       opacity: 0.7;
     }
 
+    .icon-btn-emoji {
+      font-size: 15px;
+      padding: 4px 9px;
+      background: rgba(184, 137, 61, 0.12);
+    }
+
+    .icon-btn-emoji:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    /* 设置面板 */
+    .settings-section {
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .settings-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .settings-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 8px;
+    }
+
+    .settings-hint {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--color-text);
+      opacity: 0.7;
+      margin-bottom: 16px;
+    }
+
     .asset-list {
       background: var(--color-light);
       padding: 0 20px;
@@ -551,11 +590,12 @@
           <option value="days-desc">使用天数 多→少</option>
           <option value="price-desc">原价 高→低</option>
         </select>
-        <button class="icon-btn" id="exportBtn" type="button" aria-label="导出备份">导出</button>
-        <button class="icon-btn" id="importBtn" type="button" aria-label="导入备份">导入</button>
+        <button class="icon-btn icon-btn-emoji" id="ocrBtn" type="button" aria-label="截图识别导入">📷</button>
+        <button class="icon-btn icon-btn-emoji" id="settingsBtn" type="button" aria-label="设置">⚙</button>
       </div>
     </div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <input type="file" id="ocrFile" accept="image/*" hidden>
     <div class="asset-list" id="assetList">
       <div class="empty-state">
         <div class="empty-state-icon">📝</div>
@@ -590,6 +630,45 @@
         </div>
       </form>
       <button class="btn btn-danger" id="deleteBtn" style="display: none; width: 100%; margin-top: 12px;">删除</button>
+    </div>
+  </div>
+
+  <!-- 设置模态框 -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">设置</div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">数据备份</div>
+        <p class="settings-hint">建议定期导出备份；导入会与现有数据按记录合并。</p>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-secondary" id="exportBtn">导出备份</button>
+          <button type="button" class="btn btn-secondary" id="importBtn">导入备份</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">截图识别（DeepSeek）</div>
+        <p class="settings-hint">
+          填入你自己的 DeepSeek API Key 后，点击列表上方「📷」即可从订单 / 小票截图识别物品名称、价格、日期，结果会预填到表单供你确认。
+          识别分两步：① 在你的浏览器本机用 OCR 提取文字；② 仅把提取出的<strong>文字</strong>发送给 DeepSeek 整理成结构化信息——<strong>图片不会离开本机</strong>。
+          <br>⚠️ 需要联网；首次使用会从 CDN 下载 OCR 组件与中文识别数据（约数 MB）。Key 仅保存在本机浏览器。
+        </p>
+        <div class="form-group">
+          <label class="form-label">DeepSeek API Key</label>
+          <input type="password" id="apiKeyInput" class="form-input" placeholder="sk-..." autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label class="form-label">模型</label>
+          <input type="text" id="apiModelInput" class="form-input" placeholder="deepseek-chat" spellcheck="false">
+        </div>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-danger" id="clearKeyBtn">清除 Key</button>
+          <button type="button" class="btn btn-primary" id="saveSettingsBtn">保存</button>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-secondary" id="closeSettingsBtn" style="width: 100%; margin-top: 16px;">关闭</button>
     </div>
   </div>
 
@@ -914,6 +993,184 @@
         importData(importFile.files[0]);
       }
       importFile.value = '';
+    });
+
+    // ==================== 设置 ====================
+    const API_KEY_KEY = 'youshu_deepseek_key';
+    const API_MODEL_KEY = 'youshu_deepseek_model';
+    const DEFAULT_MODEL = 'deepseek-chat';
+
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const clearKeyBtn = document.getElementById('clearKeyBtn');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiModelInput = document.getElementById('apiModelInput');
+
+    function openSettings() {
+      apiKeyInput.value = localStorage.getItem(API_KEY_KEY) || '';
+      apiModelInput.value = localStorage.getItem(API_MODEL_KEY) || DEFAULT_MODEL;
+      settingsModal.classList.add('active');
+    }
+
+    function closeSettings() {
+      settingsModal.classList.remove('active');
+    }
+
+    settingsBtn.addEventListener('click', openSettings);
+    closeSettingsBtn.addEventListener('click', closeSettings);
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) closeSettings();
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      const model = apiModelInput.value.trim() || DEFAULT_MODEL;
+      if (key) {
+        localStorage.setItem(API_KEY_KEY, key);
+      } else {
+        localStorage.removeItem(API_KEY_KEY);
+      }
+      localStorage.setItem(API_MODEL_KEY, model);
+      alert('设置已保存');
+      closeSettings();
+    });
+
+    clearKeyBtn.addEventListener('click', () => {
+      localStorage.removeItem(API_KEY_KEY);
+      apiKeyInput.value = '';
+      alert('已清除 API Key');
+    });
+
+    // ==================== 截图识别（本机 OCR + DeepSeek 整理） ====================
+    const ocrBtn = document.getElementById('ocrBtn');
+    const ocrFile = document.getElementById('ocrFile');
+    const TESSERACT_CDN = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        if (window.Tesseract) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('OCR 组件加载失败（请检查网络）'));
+        document.head.appendChild(s);
+      });
+    }
+
+    // 步骤一：在本机用 Tesseract.js 把截图转成文字（图片不上传）
+    async function ocrImageToText(file) {
+      await loadScript(TESSERACT_CDN);
+      const { data } = await window.Tesseract.recognize(file, 'chi_sim+eng');
+      return (data && data.text ? data.text : '').trim();
+    }
+
+    // 步骤二：把 OCR 文字发给 DeepSeek，整理成结构化字段
+    async function analyzeTextWithDeepSeek(text, key, model) {
+      const prompt = '你是信息抽取助手。下面是一张购物/订单/小票截图经 OCR 得到的文字，可能有噪声。'
+        + '请从中提取单件商品信息，并只返回 JSON：name(商品名称，字符串)、price(购买价格，数字，单位人民币元)、date(购买日期，格式 YYYY-MM-DD)。'
+        + '无法确定时：name 用空字符串，price 用 0，date 用空字符串。\n\nOCR 文字：\n"""\n' + text + '\n"""';
+
+      const res = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          response_format: { type: 'json_object' },
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error('DeepSeek 接口返回 ' + res.status + (errText ? '：' + errText.slice(0, 160) : ''));
+      }
+
+      const result = await res.json();
+      const content = result && result.choices && result.choices[0]
+        && result.choices[0].message && result.choices[0].message.content;
+      if (!content) throw new Error('未获得有效结果');
+      return content;
+    }
+
+    // 从模型返回的文本中提取 JSON，并归一化为表单字段
+    function parseRecognizedAsset(text) {
+      let jsonStr = (text || '').trim();
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (match) jsonStr = match[0];
+
+      let obj = {};
+      try { obj = JSON.parse(jsonStr); } catch (e) { obj = {}; }
+
+      const price = parseFloat(obj.price);
+      return {
+        name: typeof obj.name === 'string' ? obj.name.trim() : '',
+        price: isNaN(price) || price <= 0 ? '' : price,
+        date: (typeof obj.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.date))
+          ? obj.date : getTodayDate()
+      };
+    }
+
+    // 用识别结果预填「添加资产」表单，等待用户确认
+    function prefillNewAsset(data) {
+      editingId = null;
+      modalTitle.textContent = '确认导入资产';
+      assetForm.reset();
+      assetNameInput.value = data.name || '';
+      assetPriceInput.value = data.price || '';
+      assetDateInput.value = data.date || getTodayDate();
+      deleteBtn.style.display = 'none';
+      document.getElementById('formButtons').classList.remove('edit');
+      modal.classList.add('active');
+      if (!data.name) assetNameInput.focus();
+    }
+
+    async function recognizeScreenshot(file) {
+      const key = localStorage.getItem(API_KEY_KEY);
+      if (!key) {
+        alert('请先在「设置 ⚙」中填入 DeepSeek API Key');
+        openSettings();
+        return;
+      }
+      const model = localStorage.getItem(API_MODEL_KEY) || DEFAULT_MODEL;
+
+      ocrBtn.disabled = true;
+      try {
+        ocrBtn.textContent = '识别…';
+        const text = await ocrImageToText(file);
+        if (!text) throw new Error('未能从图片中识别出文字，请换一张更清晰的截图');
+
+        ocrBtn.textContent = '整理…';
+        const content = await analyzeTextWithDeepSeek(text, key, model);
+
+        prefillNewAsset(parseRecognizedAsset(content));
+      } catch (err) {
+        alert('识别失败：' + err.message
+          + '\n\n若 DeepSeek 提示网络 / CORS 错误，说明浏览器无法直连该接口，需改用后端代理。');
+      } finally {
+        ocrBtn.disabled = false;
+        ocrBtn.textContent = '📷';
+      }
+    }
+
+    ocrBtn.addEventListener('click', () => {
+      if (!localStorage.getItem(API_KEY_KEY)) {
+        alert('请先在「设置 ⚙」中填入 DeepSeek API Key');
+        openSettings();
+        return;
+      }
+      ocrFile.click();
+    });
+    ocrFile.addEventListener('change', () => {
+      if (ocrFile.files && ocrFile.files[0]) {
+        recognizeScreenshot(ocrFile.files[0]);
+      }
+      ocrFile.value = '';
     });
 
     // ==================== 工具函数 ====================
