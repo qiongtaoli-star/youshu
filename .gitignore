@@ -1,0 +1,18 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 构建输出
+dist/
+build/
+*.log
+
+# 依赖（本项目不使用，仅作参考）
+node_modules/
