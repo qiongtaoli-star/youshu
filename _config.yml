@@ -1,0 +1,23 @@
+theme: jekyll-theme-slate
+title: 有数·资产记录
+description: 纯前端 PWA App，记录物品，按使用天数摊销成本
+
+# GitHub Pages 配置
+plugins:
+  - jekyll-remote-theme
+
+# 禁用 Jekyll 处理（重要：这是一个单文件 HTML App）
+exclude:
+  - .gitignore
+  - README.md
+  - QUICKSTART.md
+  - DEVELOPMENT.md
+  - package.json
+  - generate-icons.js
+
+# 允许访问所有文件
+include:
+  - index.html
+  - manifest.json
+  - sw.js
+  - icon-*.png
