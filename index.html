@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="有数·资产记录 - 记录物品，摊销成本，每件物品都在替你赚回成本">
+  <meta name="theme-color" content="#16140f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="manifest" href="manifest.json">
+  <title>有数·资产记录</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-dark: #16140f;
+      --color-light: #f5f1e8;
+      --color-gold: #b8893d;
+      --color-green: #4a6741;
+      --color-red: #9c4a3a;
+      --color-text: #2a2520;
+      --color-border: #e8e4d9;
+      --color-success: #5fa469;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background-color: var(--color-light);
+      color: var(--color-text);
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 顶部看板 */
+    .header {
+      background: linear-gradient(135deg, var(--color-dark) 0%, #1f1a15 100%);
+      color: var(--color-light);
+      padding: max(16px, var(--safe-top)) 20px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0.85;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 8px;
+    }
+
+    .dashboard-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .dashboard-value {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 32px;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+      color: var(--color-gold);
+    }
+
+    .dashboard-item.main .dashboard-value {
+      font-size: 48px;
+      color: var(--color-light);
+    }
+
+    .dashboard-label {
+      font-size: 12px;
+      opacity: 0.75;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .dashboard-row .dashboard-item .dashboard-value {
+      font-size: 20px;
+    }
+
+    .dashboard-row .dashboard-label {
+      font-size: 11px;
+    }
+
+    /* 列表容器 */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0;
+    }
+
+    .list-header {
+      padding: 16px 20px;
+      background: var(--color-light);
+      border-bottom: 1px solid var(--color-border);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text);
+      opacity: 0.7;
+      letter-spacing: 0.3px;
+      padding-bottom: 12px;
+    }
+
+    .asset-list {
+      background: var(--color-light);
+      padding: 0 20px;
+    }
+
+    .asset-item {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--color-border);
+      cursor: pointer;
+      transition: background-color 0.2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .asset-item:active {
+      background-color: rgba(184, 137, 61, 0.05);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .asset-item {
+        transition: background-color 0.2s ease;
+      }
+    }
+
+    .asset-days {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .asset-days-value {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 24px;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-dark);
+    }
+
+    .asset-days-label {
+      font-size: 10px;
+      opacity: 0.6;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    .asset-info {
+      min-width: 0;
+    }
+
+    .asset-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .asset-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--color-text);
+      opacity: 0.7;
+    }
+
+    .asset-stats {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .asset-daily-cost {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-red);
+      line-height: 1.2;
+    }
+
+    .asset-original-price {
+      font-size: 11px;
+      opacity: 0.6;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty-state {
+      padding: 60px 20px 40px;
+      text-align: center;
+      color: var(--color-text);
+      opacity: 0.6;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* 浮动按钮 */
+    .fab {
+      position: fixed;
+      bottom: max(24px, calc(24px + var(--safe-bottom)));
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, var(--color-gold) 0%, #a07a34 100%);
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(184, 137, 61, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .fab:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 8px rgba(184, 137, 61, 0.2);
+    }
+
+    /* 模态框 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-content {
+      background: var(--color-light);
+      width: 100%;
+      border-radius: 16px 16px 0 0;
+      padding: 24px 20px max(20px, var(--safe-bottom));
+      animation: slideUp 0.3s ease;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--color-text);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--color-text);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      background: white;
+      color: var(--color-text);
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-gold);
+      box-shadow: 0 0 0 3px rgba(184, 137, 61, 0.1);
+    }
+
+    .form-input[type="number"] {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .form-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .form-buttons.edit {
+      grid-template-columns: 1fr;
+    }
+
+    .btn {
+      padding: 14px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-gold) 0%, #a07a34 100%);
+      color: white;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: var(--color-border);
+      color: var(--color-text);
+    }
+
+    .btn-secondary:active {
+      opacity: 0.8;
+    }
+
+    .btn-danger {
+      background: rgba(156, 74, 58, 0.1);
+      color: var(--color-red);
+    }
+
+    .btn-danger:active {
+      opacity: 0.8;
+    }
+
+    .modal.active ~ .fab {
+      display: none;
+    }
+
+    /* 键盘焦点可见 */
+    .form-input:focus-visible,
+    .btn:focus-visible {
+      outline: 2px solid var(--color-gold);
+      outline-offset: 2px;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 480px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .dashboard-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .asset-item {
+        grid-template-columns: 50px 1fr auto;
+        gap: 12px;
+      }
+
+      .asset-days-value {
+        font-size: 20px;
+      }
+    }
+
+    /* 适配安全区 */
+    @supports (padding: max(0px)) {
+      .header {
+        padding-top: max(16px, var(--safe-top));
+      }
+
+      .fab {
+        bottom: max(24px, calc(24px + var(--safe-bottom)));
+      }
+
+      .modal-content {
+        padding-bottom: max(20px, var(--safe-bottom));
+      }
+    }
+
+    /* 滚动条美化 */
+    .content::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: rgba(184, 137, 61, 0.3);
+      border-radius: 2px;
+    }
+
+    .content::-webkit-scrollbar-thumb:hover {
+      background: rgba(184, 137, 61, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部看板 -->
+  <header class="header">
+    <div class="header-title">有数·资产记录</div>
+    <div class="dashboard">
+      <div class="dashboard-item main">
+        <div class="dashboard-label">今日总日均成本</div>
+        <div class="dashboard-value" id="totalDailyCost">¥0.00</div>
+      </div>
+      <div class="dashboard-item">
+        <div class="dashboard-value" id="assetCount">0</div>
+        <div class="dashboard-label">资产总数</div>
+      </div>
+    </div>
+    <div class="dashboard-row">
+      <div class="dashboard-item">
+        <div class="dashboard-value" id="totalDays">0</div>
+        <div class="dashboard-label">累计已用天数</div>
+      </div>
+      <div class="dashboard-item">
+        <div class="dashboard-value" id="totalValue">¥0.00</div>
+        <div class="dashboard-label">总资产价值</div>
+      </div>
+      <div class="dashboard-item">
+        <div class="dashboard-value" id="avgDailyCost">¥0.00</div>
+        <div class="dashboard-label">日均摊销</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 列表区 -->
+  <div class="content">
+    <div class="list-header">资产明细</div>
+    <div class="asset-list" id="assetList">
+      <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <div class="empty-state-text">还没有记录任何资产<br>点击右下方按钮开始添加</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 浮动按钮 -->
+  <button class="fab" id="fabBtn">＋</button>
+
+  <!-- 编辑/新增模态框 -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-header" id="modalTitle">添加资产</div>
+      <form id="assetForm">
+        <div class="form-group">
+          <label class="form-label">物品名称</label>
+          <input type="text" id="assetName" class="form-input" placeholder="例：iPhone 15 Pro" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">购买价格（元）</label>
+          <input type="number" id="assetPrice" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">购买日期</label>
+          <input type="date" id="assetDate" class="form-input" required>
+        </div>
+        <div class="form-buttons" id="formButtons">
+          <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+      <button class="btn btn-danger" id="deleteBtn" style="display: none; width: 100%; margin-top: 12px;">删除</button>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 数据管理 ====================
+    const STORAGE_KEY = 'youshu_assets';
+    
+    let assets = [];
+    let editingId = null;
+
+    function loadAssets() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      assets = data ? JSON.parse(data) : [];
+    }
+
+    function saveAssets() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
+    }
+
+    function generateId() {
+      return Date.now().toString();
+    }
+
+    function getTodayDate() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function calculateDaysUsed(dateString) {
+      const purchaseDate = new Date(dateString + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const daysUsed = Math.floor((today - purchaseDate) / (1000 * 60 * 60 * 24)) + 1;
+      return Math.max(1, daysUsed);
+    }
+
+    function calculateDailyCost(price, daysUsed) {
+      return price / daysUsed;
+    }
+
+    function formatCurrency(value) {
+      return '¥' + parseFloat(value).toFixed(2);
+    }
+
+    function formatNumber(value) {
+      return value.toLocaleString('zh-CN');
+    }
+
+    // ==================== UI 更新 ====================
+    function updateDashboard() {
+      if (assets.length === 0) {
+        document.getElementById('totalDailyCost').textContent = '¥0.00';
+        document.getElementById('assetCount').textContent = '0';
+        document.getElementById('totalDays').textContent = '0';
+        document.getElementById('totalValue').textContent = '¥0.00';
+        document.getElementById('avgDailyCost').textContent = '¥0.00';
+        return;
+      }
+
+      let totalCost = 0;
+      let totalDays = 0;
+      let totalValue = 0;
+
+      assets.forEach(asset => {
+        const daysUsed = calculateDaysUsed(asset.date);
+        const dailyCost = calculateDailyCost(asset.price, daysUsed);
+        totalCost += dailyCost;
+        totalDays += daysUsed;
+        totalValue += asset.price;
+      });
+
+      document.getElementById('totalDailyCost').textContent = formatCurrency(totalCost);
+      document.getElementById('assetCount').textContent = assets.length;
+      document.getElementById('totalDays').textContent = totalDays;
+      document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+      document.getElementById('avgDailyCost').textContent = formatCurrency(totalValue / totalDays);
+    }
+
+    function renderAssetList() {
+      const listContainer = document.getElementById('assetList');
+      
+      if (assets.length === 0) {
+        listContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-text">还没有记录任何资产<br>点击右下方按钮开始添加</div>
+          </div>
+        `;
+        return;
+      }
+
+      // 按购买日期排序（最新在前）
+      const sortedAssets = [...assets].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      listContainer.innerHTML = sortedAssets.map(asset => {
+        const daysUsed = calculateDaysUsed(asset.date);
+        const dailyCost = calculateDailyCost(asset.price, daysUsed);
+        
+        return `
+          <div class="asset-item" data-id="${asset.id}">
+            <div class="asset-days">
+              <div class="asset-days-value">${daysUsed}</div>
+              <div class="asset-days-label">天</div>
+            </div>
+            <div class="asset-info">
+              <div class="asset-name">${escapeHtml(asset.name)}</div>
+              <div class="asset-meta">
+                <span>${asset.date}</span>
+              </div>
+            </div>
+            <div class="asset-stats">
+              <div class="asset-daily-cost">${formatCurrency(dailyCost)}/天</div>
+              <div class="asset-original-price">原价 ${formatCurrency(asset.price)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 绑定点击事件
+      document.querySelectorAll('.asset-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          editAsset(id);
+        });
+      });
+    }
+
+    function updateUI() {
+      updateDashboard();
+      renderAssetList();
+    }
+
+    // ==================== 表单处理 ====================
+    const modal = document.getElementById('modal');
+    const assetForm = document.getElementById('assetForm');
+    const fabBtn = document.getElementById('fabBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const modalTitle = document.getElementById('modalTitle');
+    const assetNameInput = document.getElementById('assetName');
+    const assetPriceInput = document.getElementById('assetPrice');
+    const assetDateInput = document.getElementById('assetDate');
+
+    function openNewAssetModal() {
+      editingId = null;
+      modalTitle.textContent = '添加资产';
+      assetForm.reset();
+      assetDateInput.value = getTodayDate();
+      deleteBtn.style.display = 'none';
+      document.getElementById('formButtons').classList.remove('edit');
+      modal.classList.add('active');
+      assetNameInput.focus();
+    }
+
+    function editAsset(id) {
+      const asset = assets.find(a => a.id === id);
+      if (!asset) return;
+
+      editingId = id;
+      modalTitle.textContent = '编辑资产';
+      assetNameInput.value = asset.name;
+      assetPriceInput.value = asset.price;
+      assetDateInput.value = asset.date;
+      deleteBtn.style.display = 'block';
+      document.getElementById('formButtons').classList.add('edit');
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      editingId = null;
+      assetForm.reset();
+    }
+
+    fabBtn.addEventListener('click', openNewAssetModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    assetForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const name = assetNameInput.value.trim();
+      const price = parseFloat(assetPriceInput.value);
+      const date = assetDateInput.value;
+
+      if (!name || !price || !date) return;
+
+      if (editingId) {
+        // 编辑模式
+        const asset = assets.find(a => a.id === editingId);
+        if (asset) {
+          asset.name = name;
+          asset.price = price;
+          asset.date = date;
+        }
+      } else {
+        // 新增模式
+        assets.push({
+          id: generateId(),
+          name,
+          price,
+          date
+        });
+      }
+
+      saveAssets();
+      updateUI();
+      closeModal();
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      if (editingId && confirm('确定要删除这个资产吗？')) {
+        assets = assets.filter(a => a.id !== editingId);
+        saveAssets();
+        updateUI();
+        closeModal();
+      }
+    });
+
+    // 点击背景关闭模态框
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // ==================== 工具函数 ====================
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // ==================== 初始化 ====================
+    function init() {
+      loadAssets();
+      updateUI();
+
+      // 每秒重新计算一次（保证实时性）
+      setInterval(() => {
+        updateUI();
+      }, 1000);
+
+      // 页面可见性变化时更新
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          updateUI();
+        }
+      });
+    }
+
+    init();
+
+    // ==================== PWA 服务工作者注册 ====================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.log('ServiceWorker registration failed:', err);
+      });
+    }
+  </script>
+</body>
+</html>
