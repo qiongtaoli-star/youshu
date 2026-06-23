@@ -1,0 +1,29 @@
+{
+  "name": "youshu",
+  "version": "1.0.0",
+  "description": "有数·资产记录 - 纯前端 PWA App，记录物品，按使用天数摊销成本",
+  "main": "index.html",
+  "scripts": {
+    "generate-icons": "node generate-icons.js",
+    "serve": "python3 -m http.server 8000",
+    "dev": "echo 'Open http://localhost:8000 in your browser'"
+  },
+  "keywords": [
+    "pwa",
+    "asset",
+    "finance",
+    "productivity",
+    "offline",
+    "ios",
+    "android"
+  ],
+  "author": "qiongtaoli-star",
+  "license": "MIT",
+  "devDependencies": {
+    "sharp": "^0.32.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qiongtaoli-star/youshu.git"
+  }
+}
