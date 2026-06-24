@@ -309,6 +309,57 @@
       opacity: 0.85;
     }
 
+    .asset-resale {
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-green);
+    }
+
+    .asset-meta {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .asset-item--inactive {
+      opacity: 0.62;
+    }
+
+    /* 状态徽标 */
+    .status-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.6;
+      padding: 0 7px;
+      border-radius: 10px;
+      letter-spacing: 0.2px;
+    }
+
+    .status-using {
+      background: rgba(74, 103, 65, 0.16);
+      color: var(--color-green);
+    }
+
+    .status-idle {
+      background: rgba(42, 37, 32, 0.1);
+      color: rgba(42, 37, 32, 0.6);
+    }
+
+    .status-selling {
+      background: rgba(184, 137, 61, 0.16);
+      color: #97702c;
+    }
+
+    .status-sold {
+      background: rgba(58, 107, 140, 0.16);
+      color: #3a6b8c;
+    }
+
+    .status-broken {
+      background: rgba(156, 74, 58, 0.14);
+      color: var(--color-red);
+    }
+
     .empty-state {
       padding: 60px 20px 40px;
       text-align: center;
@@ -625,6 +676,24 @@
           <label class="form-label">购买日期</label>
           <input type="date" id="assetDate" class="form-input" required>
         </div>
+        <div class="form-group">
+          <label class="form-label">状态</label>
+          <select id="assetStatus" class="form-input">
+            <option value="using">正在使用</option>
+            <option value="idle">已闲置</option>
+            <option value="selling">闲鱼出售</option>
+            <option value="sold">已售出</option>
+            <option value="broken">已损坏</option>
+          </select>
+        </div>
+        <div class="form-group" id="resaleGroup" style="display: none;">
+          <label class="form-label" id="resaleLabel">回血价格（元）</label>
+          <input type="number" id="assetResale" class="form-input" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group" id="endDateGroup" style="display: none;">
+          <label class="form-label" id="endDateLabel">结束日期</label>
+          <input type="date" id="assetEndDate" class="form-input">
+        </div>
         <div class="form-buttons" id="formButtons">
           <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
           <button type="submit" class="btn btn-primary">保存</button>
@@ -705,16 +774,38 @@
       return new Date().toISOString().split('T')[0];
     }
 
-    function calculateDaysUsed(dateString) {
-      const purchaseDate = new Date(dateString + 'T00:00:00');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const daysUsed = Math.floor((today - purchaseDate) / (1000 * 60 * 60 * 24)) + 1;
-      return Math.max(1, daysUsed);
+    function dayCount(startStr, end) {
+      const start = new Date(startStr + 'T00:00:00');
+      const endDate = (typeof end === 'string') ? new Date(end + 'T00:00:00') : new Date(end);
+      endDate.setHours(0, 0, 0, 0);
+      const days = Math.floor((endDate - start) / (1000 * 60 * 60 * 24)) + 1;
+      return Math.max(1, days);
     }
 
-    function calculateDailyCost(price, daysUsed) {
-      return price / daysUsed;
+    function calculateDaysUsed(dateString) {
+      return dayCount(dateString, new Date());
+    }
+
+    // 状态文案
+    const STATUS_LABELS = {
+      using: '正在使用',
+      idle: '已闲置',
+      selling: '闲鱼出售',
+      sold: '已售出',
+      broken: '已损坏'
+    };
+
+    // 计算单件资产的核心指标（含状态、回血价、冻结天数）
+    function computeAssetMetrics(asset) {
+      const status = asset.status || 'using';
+      const resale = parseFloat(asset.resalePrice) || 0;
+      // 已售出 / 已损坏：使用天数冻结到结束日期；其余算到今天
+      const frozen = (status === 'sold' || status === 'broken') && asset.endDate;
+      const daysUsed = frozen ? dayCount(asset.date, asset.endDate) : calculateDaysUsed(asset.date);
+      // 已售出：真实使用成本 =（原价 - 回血）/ 使用天数；其余按原价摊销
+      const netCost = status === 'sold' ? Math.max(0, asset.price - resale) : asset.price;
+      const dailyCost = netCost / daysUsed;
+      return { status, resale, daysUsed, netCost, dailyCost, frozen };
     }
 
     function formatCurrency(value) {
@@ -727,7 +818,10 @@
 
     // ==================== UI 更新 ====================
     function updateDashboard() {
-      if (assets.length === 0) {
+      // 看板仅统计「当前持有」的资产（已售出不再计入总值与日均）
+      const owned = assets.filter(a => (a.status || 'using') !== 'sold');
+
+      if (owned.length === 0) {
         document.getElementById('totalDailyCost').textContent = '¥0.00';
         document.getElementById('assetCount').textContent = '0';
         document.getElementById('totalDays').textContent = '0';
@@ -740,43 +834,35 @@
       let totalDays = 0;
       let totalValue = 0;
 
-      assets.forEach(asset => {
-        const daysUsed = calculateDaysUsed(asset.date);
-        const dailyCost = calculateDailyCost(asset.price, daysUsed);
-        totalCost += dailyCost;
-        totalDays += daysUsed;
+      owned.forEach(asset => {
+        const m = computeAssetMetrics(asset);
+        totalCost += m.dailyCost;
+        totalDays += m.daysUsed;
         totalValue += asset.price;
       });
 
       document.getElementById('totalDailyCost').textContent = formatCurrency(totalCost);
-      document.getElementById('assetCount').textContent = assets.length;
+      document.getElementById('assetCount').textContent = owned.length;
       document.getElementById('totalDays').textContent = totalDays;
       document.getElementById('totalValue').textContent = formatCurrency(totalValue);
       document.getElementById('avgDailyCost').textContent = formatCurrency(totalValue / totalDays);
     }
 
     function getSortedAssets() {
-      const withCalc = assets.map(asset => {
-        const daysUsed = calculateDaysUsed(asset.date);
-        return {
-          asset,
-          daysUsed,
-          dailyCost: calculateDailyCost(asset.price, daysUsed)
-        };
-      });
+      const withCalc = assets.map(asset => ({ asset, m: computeAssetMetrics(asset) }));
 
       switch (currentSort) {
         case 'date-asc':
           withCalc.sort((a, b) => new Date(a.asset.date) - new Date(b.asset.date));
           break;
         case 'cost-desc':
-          withCalc.sort((a, b) => b.dailyCost - a.dailyCost);
+          withCalc.sort((a, b) => b.m.dailyCost - a.m.dailyCost);
           break;
         case 'cost-asc':
-          withCalc.sort((a, b) => a.dailyCost - b.dailyCost);
+          withCalc.sort((a, b) => a.m.dailyCost - b.m.dailyCost);
           break;
         case 'days-desc':
-          withCalc.sort((a, b) => b.daysUsed - a.daysUsed);
+          withCalc.sort((a, b) => b.m.daysUsed - a.m.daysUsed);
           break;
         case 'price-desc':
           withCalc.sort((a, b) => b.asset.price - a.asset.price);
@@ -801,24 +887,32 @@
         return;
       }
 
-      listContainer.innerHTML = getSortedAssets().map(({ asset, daysUsed, dailyCost }) => `
-          <div class="asset-item" data-id="${asset.id}">
+      listContainer.innerHTML = getSortedAssets().map(({ asset, m }) => {
+        const inactive = (m.status === 'sold' || m.status === 'broken');
+        const daysLabel = m.frozen ? '天(止)' : '天';
+        const resaleLine = (m.status === 'sold' || m.status === 'selling') && m.resale > 0
+          ? `<div class="asset-resale">回血 ${formatCurrency(m.resale)}</div>` : '';
+        return `
+          <div class="asset-item${inactive ? ' asset-item--inactive' : ''}" data-id="${asset.id}">
             <div class="asset-days">
-              <div class="asset-days-value">${daysUsed}</div>
-              <div class="asset-days-label">天</div>
+              <div class="asset-days-value">${m.daysUsed}</div>
+              <div class="asset-days-label">${daysLabel}</div>
             </div>
             <div class="asset-info">
               <div class="asset-name">${escapeHtml(asset.name)}</div>
               <div class="asset-meta">
+                <span class="status-badge status-${m.status}">${STATUS_LABELS[m.status] || '正在使用'}</span>
                 <span>${asset.date}</span>
               </div>
             </div>
             <div class="asset-stats">
               <div class="asset-price">${formatCurrency(asset.price)}</div>
-              <div class="asset-daily-cost">${formatCurrency(dailyCost)}/天</div>
+              ${resaleLine}
+              <div class="asset-daily-cost">${formatCurrency(m.dailyCost)}/天</div>
             </div>
           </div>
-        `).join('');
+        `;
+      }).join('');
     }
 
     function updateUI() {
@@ -836,12 +930,39 @@
     const assetNameInput = document.getElementById('assetName');
     const assetPriceInput = document.getElementById('assetPrice');
     const assetDateInput = document.getElementById('assetDate');
+    const assetStatusInput = document.getElementById('assetStatus');
+    const assetResaleInput = document.getElementById('assetResale');
+    const assetEndDateInput = document.getElementById('assetEndDate');
+    const resaleGroup = document.getElementById('resaleGroup');
+    const endDateGroup = document.getElementById('endDateGroup');
+    const resaleLabel = document.getElementById('resaleLabel');
+    const endDateLabel = document.getElementById('endDateLabel');
+
+    // 根据状态显示/隐藏「回血价格」「结束日期」
+    function updateStatusFields() {
+      const status = assetStatusInput.value;
+      const showResale = status === 'selling' || status === 'sold';
+      const showEnd = status === 'sold' || status === 'broken';
+
+      resaleGroup.style.display = showResale ? 'block' : 'none';
+      endDateGroup.style.display = showEnd ? 'block' : 'none';
+      resaleLabel.textContent = status === 'sold' ? '成交回血价格（元）' : '期望回血价格（元）';
+      endDateLabel.textContent = status === 'sold' ? '售出日期' : '损坏日期';
+
+      if (showEnd && !assetEndDateInput.value) {
+        assetEndDateInput.value = getTodayDate();
+      }
+    }
+
+    assetStatusInput.addEventListener('change', updateStatusFields);
 
     function openNewAssetModal() {
       editingId = null;
       modalTitle.textContent = '添加资产';
       assetForm.reset();
       assetDateInput.value = getTodayDate();
+      assetStatusInput.value = 'using';
+      updateStatusFields();
       deleteBtn.style.display = 'none';
       document.getElementById('formButtons').classList.remove('edit');
       modal.classList.add('active');
@@ -857,6 +978,10 @@
       assetNameInput.value = asset.name;
       assetPriceInput.value = asset.price;
       assetDateInput.value = asset.date;
+      assetStatusInput.value = asset.status || 'using';
+      assetResaleInput.value = (asset.resalePrice != null) ? asset.resalePrice : '';
+      assetEndDateInput.value = asset.endDate || '';
+      updateStatusFields();
       deleteBtn.style.display = 'block';
       document.getElementById('formButtons').classList.add('edit');
       modal.classList.add('active');
@@ -877,8 +1002,14 @@
       const name = assetNameInput.value.trim();
       const price = parseFloat(assetPriceInput.value);
       const date = assetDateInput.value;
+      const status = assetStatusInput.value || 'using';
 
       if (!name || !price || !date) return;
+
+      const hasResale = status === 'selling' || status === 'sold';
+      const hasEnd = status === 'sold' || status === 'broken';
+      const resalePrice = hasResale ? (parseFloat(assetResaleInput.value) || 0) : 0;
+      const endDate = hasEnd ? (assetEndDateInput.value || getTodayDate()) : '';
 
       if (editingId) {
         // 编辑模式
@@ -887,6 +1018,9 @@
           asset.name = name;
           asset.price = price;
           asset.date = date;
+          asset.status = status;
+          asset.resalePrice = resalePrice;
+          asset.endDate = endDate;
         }
       } else {
         // 新增模式
@@ -894,7 +1028,10 @@
           id: generateId(),
           name,
           price,
-          date
+          date,
+          status,
+          resalePrice,
+          endDate
         });
       }
 
@@ -964,7 +1101,10 @@
               id: String(x.id || generateId()),
               name: String(x.name).trim(),
               price: parseFloat(x.price),
-              date: x.date
+              date: x.date,
+              status: STATUS_LABELS[x.status] ? x.status : 'using',
+              resalePrice: parseFloat(x.resalePrice) || 0,
+              endDate: (typeof x.endDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.endDate)) ? x.endDate : ''
             }));
 
           if (valid.length === 0) throw new Error('没有可导入的有效记录');
@@ -1125,6 +1265,8 @@
       assetNameInput.value = data.name || '';
       assetPriceInput.value = data.price || '';
       assetDateInput.value = data.date || getTodayDate();
+      assetStatusInput.value = 'using';
+      updateStatusFields();
       deleteBtn.style.display = 'none';
       document.getElementById('formButtons').classList.remove('edit');
       modal.classList.add('active');
