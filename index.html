@@ -119,15 +119,101 @@
     }
 
     .list-header {
-      padding: 16px 20px;
+      padding: 16px 20px 12px;
       background: var(--color-light);
       border-bottom: 1px solid var(--color-border);
       font-size: 13px;
       font-weight: 600;
       color: var(--color-text);
-      opacity: 0.7;
       letter-spacing: 0.3px;
-      padding-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .list-header-title {
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
+    .list-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sort-select {
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--color-text);
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      cursor: pointer;
+    }
+
+    .sort-select:focus-visible,
+    .icon-btn:focus-visible {
+      outline: 2px solid var(--color-gold);
+      outline-offset: 2px;
+    }
+
+    .icon-btn {
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--color-gold);
+      background: rgba(184, 137, 61, 0.1);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .icon-btn:active {
+      opacity: 0.7;
+    }
+
+    .icon-btn-emoji {
+      font-size: 15px;
+      padding: 4px 9px;
+      background: rgba(184, 137, 61, 0.12);
+    }
+
+    .icon-btn-emoji:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    /* 设置面板 */
+    .settings-section {
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .settings-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .settings-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 8px;
+    }
+
+    .settings-hint {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--color-text);
+      opacity: 0.7;
+      margin-bottom: 16px;
     }
 
     .asset-list {
@@ -192,6 +278,11 @@
       word-break: break-word;
     }
 
+    .asset-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+
     .asset-meta {
       display: flex;
       gap: 12px;
@@ -207,19 +298,71 @@
       gap: 4px;
     }
 
-    .asset-daily-cost {
+    .asset-price {
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 16px;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
-      color: var(--color-red);
+      color: var(--color-dark);
       line-height: 1.2;
     }
 
-    .asset-original-price {
-      font-size: 11px;
-      opacity: 0.6;
+    .asset-daily-cost {
+      font-size: 12px;
       font-variant-numeric: tabular-nums;
+      color: var(--color-red);
+      opacity: 0.85;
+    }
+
+    .asset-resale {
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-green);
+    }
+
+    .asset-meta {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .asset-item--inactive {
+      opacity: 0.62;
+    }
+
+    /* 状态徽标 */
+    .status-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.6;
+      padding: 0 7px;
+      border-radius: 10px;
+      letter-spacing: 0.2px;
+    }
+
+    .status-using {
+      background: rgba(74, 103, 65, 0.16);
+      color: var(--color-green);
+    }
+
+    .status-idle {
+      background: rgba(42, 37, 32, 0.1);
+      color: rgba(42, 37, 32, 0.6);
+    }
+
+    .status-selling {
+      background: rgba(184, 137, 61, 0.16);
+      color: #97702c;
+    }
+
+    .status-sold {
+      background: rgba(58, 107, 140, 0.16);
+      color: #3a6b8c;
+    }
+
+    .status-broken {
+      background: rgba(156, 74, 58, 0.14);
+      color: var(--color-red);
     }
 
     .empty-state {
@@ -467,8 +610,8 @@
     <div class="header-title">有数·资产记录</div>
     <div class="dashboard">
       <div class="dashboard-item main">
-        <div class="dashboard-label">今日总日均成本</div>
-        <div class="dashboard-value" id="totalDailyCost">¥0.00</div>
+        <div class="dashboard-label">总资产价值</div>
+        <div class="dashboard-value" id="totalValue">¥0.00</div>
       </div>
       <div class="dashboard-item">
         <div class="dashboard-value" id="assetCount">0</div>
@@ -477,12 +620,12 @@
     </div>
     <div class="dashboard-row">
       <div class="dashboard-item">
-        <div class="dashboard-value" id="totalDays">0</div>
-        <div class="dashboard-label">累计已用天数</div>
+        <div class="dashboard-value" id="totalDailyCost">¥0.00</div>
+        <div class="dashboard-label">今日总日均成本</div>
       </div>
       <div class="dashboard-item">
-        <div class="dashboard-value" id="totalValue">¥0.00</div>
-        <div class="dashboard-label">总资产价值</div>
+        <div class="dashboard-value" id="totalDays">0</div>
+        <div class="dashboard-label">累计已用天数</div>
       </div>
       <div class="dashboard-item">
         <div class="dashboard-value" id="avgDailyCost">¥0.00</div>
@@ -493,7 +636,23 @@
 
   <!-- 列表区 -->
   <div class="content">
-    <div class="list-header">资产明细</div>
+    <div class="list-header">
+      <span class="list-header-title">资产明细</span>
+      <div class="list-actions">
+        <select class="sort-select" id="sortSelect" aria-label="排序方式">
+          <option value="date-desc">最新购买</option>
+          <option value="date-asc">最早购买</option>
+          <option value="cost-desc">日均成本 高→低</option>
+          <option value="cost-asc">日均成本 低→高</option>
+          <option value="days-desc">使用天数 多→少</option>
+          <option value="price-desc">原价 高→低</option>
+        </select>
+        <button class="icon-btn icon-btn-emoji" id="ocrBtn" type="button" aria-label="截图识别导入">📷</button>
+        <button class="icon-btn icon-btn-emoji" id="settingsBtn" type="button" aria-label="设置">⚙</button>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <input type="file" id="ocrFile" accept="image/*" hidden>
     <div class="asset-list" id="assetList">
       <div class="empty-state">
         <div class="empty-state-icon">📝</div>
@@ -503,7 +662,7 @@
   </div>
 
   <!-- 浮动按钮 -->
-  <button class="fab" id="fabBtn">＋</button>
+  <button class="fab" id="fabBtn" type="button" aria-label="添加资产">＋</button>
 
   <!-- 编辑/新增模态框 -->
   <div class="modal" id="modal">
@@ -515,12 +674,34 @@
           <input type="text" id="assetName" class="form-input" placeholder="例：iPhone 15 Pro" required>
         </div>
         <div class="form-group">
+          <label class="form-label">图标（可选，单个 emoji；留空自动按品类判断）</label>
+          <input type="text" id="assetIcon" class="form-input" placeholder="📷" maxlength="4">
+        </div>
+        <div class="form-group">
           <label class="form-label">购买价格（元）</label>
           <input type="number" id="assetPrice" class="form-input" placeholder="0.00" step="0.01" min="0" required>
         </div>
         <div class="form-group">
           <label class="form-label">购买日期</label>
           <input type="date" id="assetDate" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">状态</label>
+          <select id="assetStatus" class="form-input">
+            <option value="using">正在使用</option>
+            <option value="idle">已闲置</option>
+            <option value="selling">闲鱼出售</option>
+            <option value="sold">已售出</option>
+            <option value="broken">已损坏</option>
+          </select>
+        </div>
+        <div class="form-group" id="resaleGroup" style="display: none;">
+          <label class="form-label" id="resaleLabel">回血价格（元）</label>
+          <input type="number" id="assetResale" class="form-input" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group" id="endDateGroup" style="display: none;">
+          <label class="form-label" id="endDateLabel">结束日期</label>
+          <input type="date" id="assetEndDate" class="form-input">
         </div>
         <div class="form-buttons" id="formButtons">
           <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
@@ -531,16 +712,72 @@
     </div>
   </div>
 
+  <!-- 设置模态框 -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">设置</div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">数据备份</div>
+        <p class="settings-hint">建议定期导出备份；导入会与现有数据按记录合并。</p>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-secondary" id="exportBtn">导出备份</button>
+          <button type="button" class="btn btn-secondary" id="importBtn">导入备份</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">截图识别（DeepSeek）</div>
+        <p class="settings-hint">
+          填入你自己的 DeepSeek API Key 后，点击列表上方「📷」即可从订单 / 小票截图识别物品名称、价格、日期，结果会预填到表单供你确认。
+          识别分两步：① 在你的浏览器本机用 OCR 提取文字；② 仅把提取出的<strong>文字</strong>发送给 DeepSeek 整理成结构化信息——<strong>图片不会离开本机</strong>。
+          <br>⚠️ 需要联网；首次使用会从 CDN 下载 OCR 组件与中文识别数据（约数 MB）。Key 仅保存在本机浏览器。
+        </p>
+        <div class="form-group">
+          <label class="form-label">DeepSeek API Key</label>
+          <input type="password" id="apiKeyInput" class="form-input" placeholder="sk-..." autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label class="form-label">模型</label>
+          <input type="text" id="apiModelInput" class="form-input" placeholder="deepseek-chat" spellcheck="false">
+        </div>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-danger" id="clearKeyBtn">清除 Key</button>
+          <button type="button" class="btn btn-primary" id="saveSettingsBtn">保存</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">AI 整理名称</div>
+        <p class="settings-hint">
+          用 DeepSeek 把杂乱的物品名批量整理为简洁规范的名称，并自动配上品类图标（会<strong>覆盖</strong>现有名称）。需先填写并保存上方 API Key。
+          <br>⚠️ 整理前建议先「导出备份」，以便不满意时恢复。
+        </p>
+        <button type="button" class="btn btn-secondary" id="aiCleanupBtn" style="width: 100%;">一键整理所有名称</button>
+      </div>
+
+      <button type="button" class="btn btn-secondary" id="closeSettingsBtn" style="width: 100%; margin-top: 16px;">关闭</button>
+    </div>
+  </div>
+
   <script>
     // ==================== 数据管理 ====================
     const STORAGE_KEY = 'youshu_assets';
-    
+    const SORT_KEY = 'youshu_sort';
+
     let assets = [];
     let editingId = null;
+    let currentSort = localStorage.getItem(SORT_KEY) || 'date-desc';
 
     function loadAssets() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      assets = data ? JSON.parse(data) : [];
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        const parsed = data ? JSON.parse(data) : [];
+        assets = Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        console.error('读取本地数据失败，已重置为空：', err);
+        assets = [];
+      }
     }
 
     function saveAssets() {
@@ -555,16 +792,94 @@
       return new Date().toISOString().split('T')[0];
     }
 
-    function calculateDaysUsed(dateString) {
-      const purchaseDate = new Date(dateString + 'T00:00:00');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const daysUsed = Math.floor((today - purchaseDate) / (1000 * 60 * 60 * 24)) + 1;
-      return Math.max(1, daysUsed);
+    function dayCount(startStr, end) {
+      const start = new Date(startStr + 'T00:00:00');
+      const endDate = (typeof end === 'string') ? new Date(end + 'T00:00:00') : new Date(end);
+      endDate.setHours(0, 0, 0, 0);
+      const days = Math.floor((endDate - start) / (1000 * 60 * 60 * 24)) + 1;
+      return Math.max(1, days);
     }
 
-    function calculateDailyCost(price, daysUsed) {
-      return price / daysUsed;
+    function calculateDaysUsed(dateString) {
+      return dayCount(dateString, new Date());
+    }
+
+    // 状态文案
+    const STATUS_LABELS = {
+      using: '正在使用',
+      idle: '已闲置',
+      selling: '闲鱼出售',
+      sold: '已售出',
+      broken: '已损坏'
+    };
+
+    // 计算单件资产的核心指标（含状态、回血价、冻结天数）
+    function computeAssetMetrics(asset) {
+      const status = asset.status || 'using';
+      const resale = parseFloat(asset.resalePrice) || 0;
+      // 已售出 / 已损坏：使用天数冻结到结束日期；其余算到今天
+      const frozen = (status === 'sold' || status === 'broken') && asset.endDate;
+      const daysUsed = frozen ? dayCount(asset.date, asset.endDate) : calculateDaysUsed(asset.date);
+      // 已售出：真实使用成本 =（原价 - 回血）/ 使用天数；其余按原价摊销
+      const netCost = status === 'sold' ? Math.max(0, asset.price - resale) : asset.price;
+      const dailyCost = netCost / daysUsed;
+      return { status, resale, daysUsed, netCost, dailyCost, frozen };
+    }
+
+    // 品类图标：按关键词推断（顺序即优先级，靠前优先匹配）
+    const CATEGORY_ICONS = [
+      { icon: '🔋', kw: ['充电宝', '移动电源', '电能块', '毫安', 'mah', '充电器', 'charger', '适配器', 'adapter', '插头', '数据线', '电池', 'powerbank', 'power bank'] },
+      { icon: '🎧', kw: ['耳机', '耳塞', 'airpods', 'buds', 'headphone', 'earphone', 'earbud', '降噪豆'] },
+      { icon: '⌚', kw: ['手表', '手环', 'watch', 'smartwatch', '腕表', '智能手环'] },
+      { icon: '🔭', kw: ['镜头', 'lens', '定焦', '变焦', '24-70', '70-200', '35mm', '50mm', '85mm', 'f1.8', 'f2.8'] },
+      { icon: '📷', kw: ['相机', '单反', '微单', 'camera', 'eos', 'gopro', '运动相机', '拍立得', '胶片机', '索尼', 'sony', 'a7', 'a6', 'zv-', '富士', 'fuji', '尼康', 'nikon', '佳能', 'canon'] },
+      { icon: '📸', kw: ['三脚架', '云台', '稳定器', 'gimbal', '闪光灯', '补光灯'] },
+      { icon: '🎮', kw: ['switch', 'ps5', 'ps4', 'xbox', 'steam deck', 'steamdeck', '游戏机', '手柄', '掌机', 'psp', 'rog ally'] },
+      { icon: '⌨️', kw: ['键盘', 'keyboard', '客制化'] },
+      { icon: '🖱️', kw: ['鼠标', 'mouse'] },
+      { icon: '🖥️', kw: ['显示器', 'monitor', '屏幕', 'display', '带鱼屏'] },
+      { icon: '📟', kw: ['平板', 'ipad', 'tablet', 'matepad', 'pad pro', 'pad air'] },
+      { icon: '💻', kw: ['笔记本', '电脑', 'laptop', 'macbook', '拯救者', 'thinkpad', '戴尔', 'dell', '华硕', 'asus', '微星', 'msi', '游戏本', 'notebook', 'matebook', '幻'] },
+      { icon: '📺', kw: ['电视', '投影', 'projector', '投影仪'] },
+      { icon: '🔊', kw: ['音箱', '音响', 'speaker', 'soundbar', '回音壁', '低音炮'] },
+      { icon: '📱', kw: ['手机', 'phone', 'iphone', 'redmi', 'mate', 'pixel', 'galaxy', 'oppo', 'vivo', '一加', 'oneplus', '荣耀', 'honor', '华为', '小米', '三星', 'realme', '魅族'] },
+      { icon: '🖊️', kw: ['钢笔', 'apple pencil', 'pencil', '手写笔'] },
+      { icon: '📚', kw: ['kindle', '电纸书', '阅读器', '书'] },
+      { icon: '🎒', kw: ['背包', '双肩包', '书包', 'bag', '钱包', '卡包'] },
+      { icon: '👟', kw: ['球鞋', '运动鞋', '跑鞋', 'sneaker', 'aj', '靴', '鞋'] },
+      { icon: '👕', kw: ['外套', '卫衣', '夹克', '羽绒', '衬衫', 't恤', '大衣', '毛衣', '裤'] },
+      { icon: '🚲', kw: ['自行车', '单车', '山地车', '公路车', 'bike', '骑行'] },
+      { icon: '🛵', kw: ['电动车', '摩托', '滑板车', '电瓶车', 'scooter'] },
+      { icon: '🚗', kw: ['汽车', '轿车', 'suv', '特斯拉', 'tesla'] },
+      { icon: '🪑', kw: ['人体工学', '升降桌', '沙发', '椅', '桌', '床', '柜', '家具'] },
+      { icon: '🏠', kw: ['冰箱', '洗衣机', '空调', '电饭煲', '微波炉', '扫地机', '吸尘器', '净化器', '加湿器', '风扇', '烤箱', '电水壶'] },
+      { icon: '💍', kw: ['戒指', '项链', '手链', '手镯', '耳环', '饰品', '手串'] },
+      { icon: '🛠️', kw: ['工具', '螺丝刀', '电钻', '扳手'] }
+    ];
+
+    function guessCategoryIcon(name) {
+      const n = (name || '').toLowerCase();
+      for (const cat of CATEGORY_ICONS) {
+        if (cat.kw.some(k => n.includes(k))) return cat.icon;
+      }
+      return '📦';
+    }
+
+    function iconFor(asset) {
+      return (asset.icon && asset.icon.trim()) ? asset.icon.trim() : guessCategoryIcon(asset.name);
+    }
+
+    // 按状态生成自动计算的时长文案
+    function statusDurationText(m) {
+      const d = m.daysUsed;
+      switch (m.status) {
+        case 'sold':   return `用了 ${d} 天`;
+        case 'broken': return `用了 ${d} 天`;
+        case 'idle':   return `已购入 ${d} 天`;
+        case 'selling':return `已使用 ${d} 天`;
+        case 'using':
+        default:       return `已使用 ${d} 天`;
+      }
     }
 
     function formatCurrency(value) {
@@ -577,7 +892,10 @@
 
     // ==================== UI 更新 ====================
     function updateDashboard() {
-      if (assets.length === 0) {
+      // 看板仅统计「当前持有」的资产（已售出不再计入总值与日均）
+      const owned = assets.filter(a => (a.status || 'using') !== 'sold');
+
+      if (owned.length === 0) {
         document.getElementById('totalDailyCost').textContent = '¥0.00';
         document.getElementById('assetCount').textContent = '0';
         document.getElementById('totalDays').textContent = '0';
@@ -590,24 +908,49 @@
       let totalDays = 0;
       let totalValue = 0;
 
-      assets.forEach(asset => {
-        const daysUsed = calculateDaysUsed(asset.date);
-        const dailyCost = calculateDailyCost(asset.price, daysUsed);
-        totalCost += dailyCost;
-        totalDays += daysUsed;
+      owned.forEach(asset => {
+        const m = computeAssetMetrics(asset);
+        totalCost += m.dailyCost;
+        totalDays += m.daysUsed;
         totalValue += asset.price;
       });
 
       document.getElementById('totalDailyCost').textContent = formatCurrency(totalCost);
-      document.getElementById('assetCount').textContent = assets.length;
+      document.getElementById('assetCount').textContent = owned.length;
       document.getElementById('totalDays').textContent = totalDays;
       document.getElementById('totalValue').textContent = formatCurrency(totalValue);
       document.getElementById('avgDailyCost').textContent = formatCurrency(totalValue / totalDays);
     }
 
+    function getSortedAssets() {
+      const withCalc = assets.map(asset => ({ asset, m: computeAssetMetrics(asset) }));
+
+      switch (currentSort) {
+        case 'date-asc':
+          withCalc.sort((a, b) => new Date(a.asset.date) - new Date(b.asset.date));
+          break;
+        case 'cost-desc':
+          withCalc.sort((a, b) => b.m.dailyCost - a.m.dailyCost);
+          break;
+        case 'cost-asc':
+          withCalc.sort((a, b) => a.m.dailyCost - b.m.dailyCost);
+          break;
+        case 'days-desc':
+          withCalc.sort((a, b) => b.m.daysUsed - a.m.daysUsed);
+          break;
+        case 'price-desc':
+          withCalc.sort((a, b) => b.asset.price - a.asset.price);
+          break;
+        case 'date-desc':
+        default:
+          withCalc.sort((a, b) => new Date(b.asset.date) - new Date(a.asset.date));
+      }
+      return withCalc;
+    }
+
     function renderAssetList() {
       const listContainer = document.getElementById('assetList');
-      
+
       if (assets.length === 0) {
         listContainer.innerHTML = `
           <div class="empty-state">
@@ -618,40 +961,33 @@
         return;
       }
 
-      // 按购买日期排序（最新在前）
-      const sortedAssets = [...assets].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      listContainer.innerHTML = sortedAssets.map(asset => {
-        const daysUsed = calculateDaysUsed(asset.date);
-        const dailyCost = calculateDailyCost(asset.price, daysUsed);
-        
+      listContainer.innerHTML = getSortedAssets().map(({ asset, m }) => {
+        const inactive = (m.status === 'sold' || m.status === 'broken');
+        const daysLabel = m.frozen ? '天(止)' : '天';
+        const resaleLine = (m.status === 'sold' || m.status === 'selling') && m.resale > 0
+          ? `<div class="asset-resale">回血 ${formatCurrency(m.resale)}</div>` : '';
         return `
-          <div class="asset-item" data-id="${asset.id}">
+          <div class="asset-item${inactive ? ' asset-item--inactive' : ''}" data-id="${asset.id}">
             <div class="asset-days">
-              <div class="asset-days-value">${daysUsed}</div>
-              <div class="asset-days-label">天</div>
+              <div class="asset-days-value">${m.daysUsed}</div>
+              <div class="asset-days-label">${daysLabel}</div>
             </div>
             <div class="asset-info">
-              <div class="asset-name">${escapeHtml(asset.name)}</div>
+              <div class="asset-name"><span class="asset-icon">${escapeHtml(iconFor(asset))}</span>${escapeHtml(asset.name)}</div>
               <div class="asset-meta">
+                <span class="status-badge status-${m.status}">${STATUS_LABELS[m.status] || '正在使用'}</span>
+                <span>${statusDurationText(m)}</span>
                 <span>${asset.date}</span>
               </div>
             </div>
             <div class="asset-stats">
-              <div class="asset-daily-cost">${formatCurrency(dailyCost)}/天</div>
-              <div class="asset-original-price">原价 ${formatCurrency(asset.price)}</div>
+              <div class="asset-price">${formatCurrency(asset.price)}</div>
+              ${resaleLine}
+              <div class="asset-daily-cost">${formatCurrency(m.dailyCost)}/天</div>
             </div>
           </div>
         `;
       }).join('');
-
-      // 绑定点击事件
-      document.querySelectorAll('.asset-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const id = item.dataset.id;
-          editAsset(id);
-        });
-      });
     }
 
     function updateUI() {
@@ -667,14 +1003,42 @@
     const deleteBtn = document.getElementById('deleteBtn');
     const modalTitle = document.getElementById('modalTitle');
     const assetNameInput = document.getElementById('assetName');
+    const assetIconInput = document.getElementById('assetIcon');
     const assetPriceInput = document.getElementById('assetPrice');
     const assetDateInput = document.getElementById('assetDate');
+    const assetStatusInput = document.getElementById('assetStatus');
+    const assetResaleInput = document.getElementById('assetResale');
+    const assetEndDateInput = document.getElementById('assetEndDate');
+    const resaleGroup = document.getElementById('resaleGroup');
+    const endDateGroup = document.getElementById('endDateGroup');
+    const resaleLabel = document.getElementById('resaleLabel');
+    const endDateLabel = document.getElementById('endDateLabel');
+
+    // 根据状态显示/隐藏「回血价格」「结束日期」
+    function updateStatusFields() {
+      const status = assetStatusInput.value;
+      const showResale = status === 'selling' || status === 'sold';
+      const showEnd = status === 'sold' || status === 'broken';
+
+      resaleGroup.style.display = showResale ? 'block' : 'none';
+      endDateGroup.style.display = showEnd ? 'block' : 'none';
+      resaleLabel.textContent = status === 'sold' ? '成交回血价格（元）' : '期望回血价格（元）';
+      endDateLabel.textContent = status === 'sold' ? '售出日期' : '损坏日期';
+
+      if (showEnd && !assetEndDateInput.value) {
+        assetEndDateInput.value = getTodayDate();
+      }
+    }
+
+    assetStatusInput.addEventListener('change', updateStatusFields);
 
     function openNewAssetModal() {
       editingId = null;
       modalTitle.textContent = '添加资产';
       assetForm.reset();
       assetDateInput.value = getTodayDate();
+      assetStatusInput.value = 'using';
+      updateStatusFields();
       deleteBtn.style.display = 'none';
       document.getElementById('formButtons').classList.remove('edit');
       modal.classList.add('active');
@@ -688,8 +1052,13 @@
       editingId = id;
       modalTitle.textContent = '编辑资产';
       assetNameInput.value = asset.name;
+      assetIconInput.value = asset.icon || '';
       assetPriceInput.value = asset.price;
       assetDateInput.value = asset.date;
+      assetStatusInput.value = asset.status || 'using';
+      assetResaleInput.value = (asset.resalePrice != null) ? asset.resalePrice : '';
+      assetEndDateInput.value = asset.endDate || '';
+      updateStatusFields();
       deleteBtn.style.display = 'block';
       document.getElementById('formButtons').classList.add('edit');
       modal.classList.add('active');
@@ -708,26 +1077,41 @@
       e.preventDefault();
       
       const name = assetNameInput.value.trim();
+      const icon = assetIconInput.value.trim().slice(0, 4);
       const price = parseFloat(assetPriceInput.value);
       const date = assetDateInput.value;
+      const status = assetStatusInput.value || 'using';
 
       if (!name || !price || !date) return;
+
+      const hasResale = status === 'selling' || status === 'sold';
+      const hasEnd = status === 'sold' || status === 'broken';
+      const resalePrice = hasResale ? (parseFloat(assetResaleInput.value) || 0) : 0;
+      const endDate = hasEnd ? (assetEndDateInput.value || getTodayDate()) : '';
 
       if (editingId) {
         // 编辑模式
         const asset = assets.find(a => a.id === editingId);
         if (asset) {
           asset.name = name;
+          asset.icon = icon;
           asset.price = price;
           asset.date = date;
+          asset.status = status;
+          asset.resalePrice = resalePrice;
+          asset.endDate = endDate;
         }
       } else {
         // 新增模式
         assets.push({
           id: generateId(),
           name,
+          icon,
           price,
-          date
+          date,
+          status,
+          resalePrice,
+          endDate
         });
       }
 
@@ -752,6 +1136,357 @@
       }
     });
 
+    // ==================== 排序 ====================
+    const sortSelect = document.getElementById('sortSelect');
+    sortSelect.value = currentSort;
+    sortSelect.addEventListener('change', () => {
+      currentSort = sortSelect.value;
+      localStorage.setItem(SORT_KEY, currentSort);
+      renderAssetList();
+    });
+
+    // ==================== 备份：导出 / 导入 ====================
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+
+    function exportData() {
+      if (assets.length === 0) {
+        alert('暂无数据可导出');
+        return;
+      }
+      const blob = new Blob([JSON.stringify(assets, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `youshu-backup-${getTodayDate()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data)) throw new Error('文件格式不正确');
+
+          const valid = data
+            .filter(x => x && typeof x.name === 'string' && x.name.trim()
+              && !isNaN(parseFloat(x.price))
+              && typeof x.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.date))
+            .map(x => ({
+              id: String(x.id || generateId()),
+              name: String(x.name).trim(),
+              icon: (typeof x.icon === 'string') ? x.icon.trim().slice(0, 4) : '',
+              price: parseFloat(x.price),
+              date: x.date,
+              status: STATUS_LABELS[x.status] ? x.status : 'using',
+              resalePrice: parseFloat(x.resalePrice) || 0,
+              endDate: (typeof x.endDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.endDate)) ? x.endDate : ''
+            }));
+
+          if (valid.length === 0) throw new Error('没有可导入的有效记录');
+
+          if (!confirm(`将导入 ${valid.length} 条记录，并与现有数据合并（相同记录会被覆盖）。是否继续？`)) {
+            return;
+          }
+
+          const map = new Map(assets.map(a => [String(a.id), a]));
+          valid.forEach(a => map.set(a.id, a));
+          assets = [...map.values()];
+          saveAssets();
+          updateUI();
+          alert(`导入成功，共合并 ${valid.length} 条记录`);
+        } catch (err) {
+          alert('导入失败：' + err.message);
+        }
+      };
+      reader.onerror = () => alert('读取文件失败');
+      reader.readAsText(file);
+    }
+
+    exportBtn.addEventListener('click', exportData);
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', () => {
+      if (importFile.files && importFile.files[0]) {
+        importData(importFile.files[0]);
+      }
+      importFile.value = '';
+    });
+
+    // ==================== 设置 ====================
+    const API_KEY_KEY = 'youshu_deepseek_key';
+    const API_MODEL_KEY = 'youshu_deepseek_model';
+    const DEFAULT_MODEL = 'deepseek-chat';
+
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const clearKeyBtn = document.getElementById('clearKeyBtn');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiModelInput = document.getElementById('apiModelInput');
+
+    function openSettings() {
+      apiKeyInput.value = localStorage.getItem(API_KEY_KEY) || '';
+      apiModelInput.value = localStorage.getItem(API_MODEL_KEY) || DEFAULT_MODEL;
+      settingsModal.classList.add('active');
+    }
+
+    function closeSettings() {
+      settingsModal.classList.remove('active');
+    }
+
+    settingsBtn.addEventListener('click', openSettings);
+    closeSettingsBtn.addEventListener('click', closeSettings);
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) closeSettings();
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      const model = apiModelInput.value.trim() || DEFAULT_MODEL;
+      if (key) {
+        localStorage.setItem(API_KEY_KEY, key);
+      } else {
+        localStorage.removeItem(API_KEY_KEY);
+      }
+      localStorage.setItem(API_MODEL_KEY, model);
+      alert('设置已保存');
+      closeSettings();
+    });
+
+    clearKeyBtn.addEventListener('click', () => {
+      localStorage.removeItem(API_KEY_KEY);
+      apiKeyInput.value = '';
+      alert('已清除 API Key');
+    });
+
+    // 一键用 DeepSeek 整理所有物品名称 + 配图标
+    const aiCleanupBtn = document.getElementById('aiCleanupBtn');
+
+    async function aiCleanupNames() {
+      const key = localStorage.getItem(API_KEY_KEY);
+      if (!key) {
+        alert('请先在上方填入并保存 DeepSeek API Key');
+        return;
+      }
+      if (assets.length === 0) {
+        alert('暂无物品可整理');
+        return;
+      }
+      if (!confirm(`将用 AI 整理 ${assets.length} 件物品的名称与图标，整理后会覆盖现有名称。\n建议先「导出备份」。是否继续？`)) {
+        return;
+      }
+
+      const model = localStorage.getItem(API_MODEL_KEY) || DEFAULT_MODEL;
+      const original = aiCleanupBtn.textContent;
+      aiCleanupBtn.disabled = true;
+      aiCleanupBtn.textContent = '整理中…';
+
+      try {
+        const payload = assets.map(a => ({ id: a.id, name: a.name }));
+        const prompt = '你会收到一个 JSON 数组，元素为 {id, name}，name 是可能冗长杂乱的物品名称。'
+          + '请为每件物品生成更简洁规范的名称，并选择一个最贴切的单个 emoji 作为品类图标。'
+          + '名称要求：保留品牌 + 型号 + 关键规格，去掉营销词、颜色、赠品、促销等冗余，尽量不超过 20 个字。'
+          + '只返回 JSON 对象，格式：{"items":[{"id":"原样返回","name":"简洁名称","icon":"📷"}]}，不要任何解释。\n\n输入：\n'
+          + JSON.stringify(payload);
+
+        const res = await fetch('https://api.deepseek.com/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+          body: JSON.stringify({
+            model,
+            temperature: 0,
+            response_format: { type: 'json_object' },
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+
+        if (!res.ok) {
+          const t = await res.text().catch(() => '');
+          throw new Error('接口返回 ' + res.status + (t ? '：' + t.slice(0, 160) : ''));
+        }
+
+        const result = await res.json();
+        const content = result && result.choices && result.choices[0]
+          && result.choices[0].message && result.choices[0].message.content;
+        if (!content) throw new Error('未获得有效结果');
+
+        let obj;
+        try { obj = JSON.parse(content); }
+        catch (e) {
+          const mm = content.match(/\{[\s\S]*\}/);
+          obj = mm ? JSON.parse(mm[0]) : null;
+        }
+        const items = obj && Array.isArray(obj.items) ? obj.items : [];
+        if (items.length === 0) throw new Error('AI 未返回有效结果');
+
+        const byId = new Map(items.map(it => [String(it.id), it]));
+        let changed = 0;
+        assets.forEach(a => {
+          const it = byId.get(String(a.id));
+          if (!it) return;
+          if (typeof it.name === 'string' && it.name.trim()) {
+            a.name = it.name.trim();
+            changed++;
+          }
+          if (typeof it.icon === 'string' && it.icon.trim()) {
+            a.icon = it.icon.trim().slice(0, 4);
+          }
+        });
+
+        saveAssets();
+        updateUI();
+        alert(`整理完成，更新了 ${changed} 件物品。`);
+        closeSettings();
+      } catch (err) {
+        alert('整理失败：' + err.message
+          + '\n\n若为网络 / CORS 错误，说明浏览器无法直连 DeepSeek，需改用后端代理。');
+      } finally {
+        aiCleanupBtn.disabled = false;
+        aiCleanupBtn.textContent = original;
+      }
+    }
+
+    aiCleanupBtn.addEventListener('click', aiCleanupNames);
+
+    // ==================== 截图识别（本机 OCR + DeepSeek 整理） ====================
+    const ocrBtn = document.getElementById('ocrBtn');
+    const ocrFile = document.getElementById('ocrFile');
+    const TESSERACT_CDN = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        if (window.Tesseract) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('OCR 组件加载失败（请检查网络）'));
+        document.head.appendChild(s);
+      });
+    }
+
+    // 步骤一：在本机用 Tesseract.js 把截图转成文字（图片不上传）
+    async function ocrImageToText(file) {
+      await loadScript(TESSERACT_CDN);
+      const { data } = await window.Tesseract.recognize(file, 'chi_sim+eng');
+      return (data && data.text ? data.text : '').trim();
+    }
+
+    // 步骤二：把 OCR 文字发给 DeepSeek，整理成结构化字段
+    async function analyzeTextWithDeepSeek(text, key, model) {
+      const prompt = '你是信息抽取助手。下面是一张购物/订单/小票截图经 OCR 得到的文字，可能有噪声。'
+        + '请从中提取单件商品信息，并只返回 JSON：name(商品名称，字符串)、price(购买价格，数字，单位人民币元)、date(购买日期，格式 YYYY-MM-DD)。'
+        + '无法确定时：name 用空字符串，price 用 0，date 用空字符串。\n\nOCR 文字：\n"""\n' + text + '\n"""';
+
+      const res = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          response_format: { type: 'json_object' },
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error('DeepSeek 接口返回 ' + res.status + (errText ? '：' + errText.slice(0, 160) : ''));
+      }
+
+      const result = await res.json();
+      const content = result && result.choices && result.choices[0]
+        && result.choices[0].message && result.choices[0].message.content;
+      if (!content) throw new Error('未获得有效结果');
+      return content;
+    }
+
+    // 从模型返回的文本中提取 JSON，并归一化为表单字段
+    function parseRecognizedAsset(text) {
+      let jsonStr = (text || '').trim();
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (match) jsonStr = match[0];
+
+      let obj = {};
+      try { obj = JSON.parse(jsonStr); } catch (e) { obj = {}; }
+
+      const price = parseFloat(obj.price);
+      return {
+        name: typeof obj.name === 'string' ? obj.name.trim() : '',
+        price: isNaN(price) || price <= 0 ? '' : price,
+        date: (typeof obj.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.date))
+          ? obj.date : getTodayDate()
+      };
+    }
+
+    // 用识别结果预填「添加资产」表单，等待用户确认
+    function prefillNewAsset(data) {
+      editingId = null;
+      modalTitle.textContent = '确认导入资产';
+      assetForm.reset();
+      assetNameInput.value = data.name || '';
+      assetIconInput.value = '';
+      assetPriceInput.value = data.price || '';
+      assetDateInput.value = data.date || getTodayDate();
+      assetStatusInput.value = 'using';
+      updateStatusFields();
+      deleteBtn.style.display = 'none';
+      document.getElementById('formButtons').classList.remove('edit');
+      modal.classList.add('active');
+      if (!data.name) assetNameInput.focus();
+    }
+
+    async function recognizeScreenshot(file) {
+      const key = localStorage.getItem(API_KEY_KEY);
+      if (!key) {
+        alert('请先在「设置 ⚙」中填入 DeepSeek API Key');
+        openSettings();
+        return;
+      }
+      const model = localStorage.getItem(API_MODEL_KEY) || DEFAULT_MODEL;
+
+      ocrBtn.disabled = true;
+      try {
+        ocrBtn.textContent = '识别…';
+        const text = await ocrImageToText(file);
+        if (!text) throw new Error('未能从图片中识别出文字，请换一张更清晰的截图');
+
+        ocrBtn.textContent = '整理…';
+        const content = await analyzeTextWithDeepSeek(text, key, model);
+
+        prefillNewAsset(parseRecognizedAsset(content));
+      } catch (err) {
+        alert('识别失败：' + err.message
+          + '\n\n若 DeepSeek 提示网络 / CORS 错误，说明浏览器无法直连该接口，需改用后端代理。');
+      } finally {
+        ocrBtn.disabled = false;
+        ocrBtn.textContent = '📷';
+      }
+    }
+
+    ocrBtn.addEventListener('click', () => {
+      if (!localStorage.getItem(API_KEY_KEY)) {
+        alert('请先在「设置 ⚙」中填入 DeepSeek API Key');
+        openSettings();
+        return;
+      }
+      ocrFile.click();
+    });
+    ocrFile.addEventListener('change', () => {
+      if (ocrFile.files && ocrFile.files[0]) {
+        recognizeScreenshot(ocrFile.files[0]);
+      }
+      ocrFile.value = '';
+    });
+
     // ==================== 工具函数 ====================
     function escapeHtml(text) {
       const map = {
@@ -765,18 +1500,33 @@
     }
 
     // ==================== 初始化 ====================
+    let lastRenderDate = getTodayDate();
+
     function init() {
       loadAssets();
       updateUI();
 
-      // 每秒重新计算一次（保证实时性）
+      // 列表点击：事件委托（只绑定一次，避免每次渲染重复绑定）
+      document.getElementById('assetList').addEventListener('click', (e) => {
+        const item = e.target.closest('.asset-item');
+        if (item && item.dataset.id) {
+          editAsset(item.dataset.id);
+        }
+      });
+
+      // 已用天数按「天」变化，跨过午夜时才需要刷新，无需每秒重绘
       setInterval(() => {
-        updateUI();
+        const today = getTodayDate();
+        if (today !== lastRenderDate) {
+          lastRenderDate = today;
+          updateUI();
+        }
       }, 1000);
 
-      // 页面可见性变化时更新
+      // 页面重新可见时刷新（可能已跨天）
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
+          lastRenderDate = getTodayDate();
           updateUI();
         }
       });

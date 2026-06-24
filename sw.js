@@ -1,5 +1,5 @@
 // Service Worker - 有数·资产记录
-const CACHE_NAME = 'youshu-v1';
+const CACHE_NAME = 'youshu-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -41,42 +41,51 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// 拦截请求 - 离线优先
+// 拦截请求
 self.addEventListener('fetch', event => {
   // 仅处理 GET 请求
   if (event.request.method !== 'GET') {
     return;
   }
 
+  const isNavigation = event.request.mode === 'navigate' ||
+    (event.request.destination === 'document');
+
+  // 页面文档：网络优先（保证用户始终拿到最新版本），离线时回退到缓存
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put('./index.html', responseToCache));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then(r => r || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // 静态资源：缓存优先，未命中再走网络并回填缓存
   event.respondWith(
     caches.match(event.request).then(response => {
-      // 如果缓存中有，直接返回
       if (response) {
         return response;
       }
 
-      // 否则尝试网络请求
       return fetch(event.request)
         .then(response => {
-          // 验证响应
           if (!response || response.status !== 200 || response.type === 'error') {
             return response;
           }
-
-          // 克隆响应
           const responseToCache = response.clone();
-
-          // 缓存成功的响应
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, responseToCache);
           });
-
           return response;
         })
-        .catch(() => {
-          // 离线且缓存中无资源，返回缓存的 HTML
-          return caches.match('./index.html');
-        });
+        .catch(() => caches.match('./index.html'));
     })
   );
 });
