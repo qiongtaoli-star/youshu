@@ -293,19 +293,20 @@
       gap: 4px;
     }
 
-    .asset-daily-cost {
+    .asset-price {
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 16px;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
-      color: var(--color-red);
+      color: var(--color-dark);
       line-height: 1.2;
     }
 
-    .asset-original-price {
-      font-size: 11px;
-      opacity: 0.6;
+    .asset-daily-cost {
+      font-size: 12px;
       font-variant-numeric: tabular-nums;
+      color: var(--color-red);
+      opacity: 0.85;
     }
 
     .empty-state {
@@ -553,8 +554,8 @@
     <div class="header-title">有数·资产记录</div>
     <div class="dashboard">
       <div class="dashboard-item main">
-        <div class="dashboard-label">今日总日均成本</div>
-        <div class="dashboard-value" id="totalDailyCost">¥0.00</div>
+        <div class="dashboard-label">总资产价值</div>
+        <div class="dashboard-value" id="totalValue">¥0.00</div>
       </div>
       <div class="dashboard-item">
         <div class="dashboard-value" id="assetCount">0</div>
@@ -563,12 +564,12 @@
     </div>
     <div class="dashboard-row">
       <div class="dashboard-item">
-        <div class="dashboard-value" id="totalDays">0</div>
-        <div class="dashboard-label">累计已用天数</div>
+        <div class="dashboard-value" id="totalDailyCost">¥0.00</div>
+        <div class="dashboard-label">今日总日均成本</div>
       </div>
       <div class="dashboard-item">
-        <div class="dashboard-value" id="totalValue">¥0.00</div>
-        <div class="dashboard-label">总资产价值</div>
+        <div class="dashboard-value" id="totalDays">0</div>
+        <div class="dashboard-label">累计已用天数</div>
       </div>
       <div class="dashboard-item">
         <div class="dashboard-value" id="avgDailyCost">¥0.00</div>
@@ -813,8 +814,8 @@
               </div>
             </div>
             <div class="asset-stats">
+              <div class="asset-price">${formatCurrency(asset.price)}</div>
               <div class="asset-daily-cost">${formatCurrency(dailyCost)}/天</div>
-              <div class="asset-original-price">原价 ${formatCurrency(asset.price)}</div>
             </div>
           </div>
         `).join('');
