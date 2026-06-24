@@ -869,6 +869,19 @@
       return (asset.icon && asset.icon.trim()) ? asset.icon.trim() : guessCategoryIcon(asset.name);
     }
 
+    // 按状态生成自动计算的时长文案
+    function statusDurationText(m) {
+      const d = m.daysUsed;
+      switch (m.status) {
+        case 'sold':   return `用了 ${d} 天`;
+        case 'broken': return `用了 ${d} 天`;
+        case 'idle':   return `已购入 ${d} 天`;
+        case 'selling':return `已使用 ${d} 天`;
+        case 'using':
+        default:       return `已使用 ${d} 天`;
+      }
+    }
+
     function formatCurrency(value) {
       return '¥' + parseFloat(value).toFixed(2);
     }
@@ -963,6 +976,7 @@
               <div class="asset-name"><span class="asset-icon">${escapeHtml(iconFor(asset))}</span>${escapeHtml(asset.name)}</div>
               <div class="asset-meta">
                 <span class="status-badge status-${m.status}">${STATUS_LABELS[m.status] || '正在使用'}</span>
+                <span>${statusDurationText(m)}</span>
                 <span>${asset.date}</span>
               </div>
             </div>
