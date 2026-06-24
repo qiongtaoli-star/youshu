@@ -278,6 +278,11 @@
       word-break: break-word;
     }
 
+    .asset-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+
     .asset-meta {
       display: flex;
       gap: 12px;
@@ -669,6 +674,10 @@
           <input type="text" id="assetName" class="form-input" placeholder="例：iPhone 15 Pro" required>
         </div>
         <div class="form-group">
+          <label class="form-label">图标（可选，单个 emoji；留空自动按品类判断）</label>
+          <input type="text" id="assetIcon" class="form-input" placeholder="📷" maxlength="4">
+        </div>
+        <div class="form-group">
           <label class="form-label">购买价格（元）</label>
           <input type="number" id="assetPrice" class="form-input" placeholder="0.00" step="0.01" min="0" required>
         </div>
@@ -736,6 +745,15 @@
           <button type="button" class="btn btn-danger" id="clearKeyBtn">清除 Key</button>
           <button type="button" class="btn btn-primary" id="saveSettingsBtn">保存</button>
         </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">AI 整理名称</div>
+        <p class="settings-hint">
+          用 DeepSeek 把杂乱的物品名批量整理为简洁规范的名称，并自动配上品类图标（会<strong>覆盖</strong>现有名称）。需先填写并保存上方 API Key。
+          <br>⚠️ 整理前建议先「导出备份」，以便不满意时恢复。
+        </p>
+        <button type="button" class="btn btn-secondary" id="aiCleanupBtn" style="width: 100%;">一键整理所有名称</button>
       </div>
 
       <button type="button" class="btn btn-secondary" id="closeSettingsBtn" style="width: 100%; margin-top: 16px;">关闭</button>
@@ -806,6 +824,49 @@
       const netCost = status === 'sold' ? Math.max(0, asset.price - resale) : asset.price;
       const dailyCost = netCost / daysUsed;
       return { status, resale, daysUsed, netCost, dailyCost, frozen };
+    }
+
+    // 品类图标：按关键词推断（顺序即优先级，靠前优先匹配）
+    const CATEGORY_ICONS = [
+      { icon: '🔋', kw: ['充电宝', '移动电源', '电能块', '毫安', 'mah', '充电器', 'charger', '适配器', 'adapter', '插头', '数据线', '电池', 'powerbank', 'power bank'] },
+      { icon: '🎧', kw: ['耳机', '耳塞', 'airpods', 'buds', 'headphone', 'earphone', 'earbud', '降噪豆'] },
+      { icon: '⌚', kw: ['手表', '手环', 'watch', 'smartwatch', '腕表', '智能手环'] },
+      { icon: '🔭', kw: ['镜头', 'lens', '定焦', '变焦', '24-70', '70-200', '35mm', '50mm', '85mm', 'f1.8', 'f2.8'] },
+      { icon: '📷', kw: ['相机', '单反', '微单', 'camera', 'eos', 'gopro', '运动相机', '拍立得', '胶片机', '索尼', 'sony', 'a7', 'a6', 'zv-', '富士', 'fuji', '尼康', 'nikon', '佳能', 'canon'] },
+      { icon: '📸', kw: ['三脚架', '云台', '稳定器', 'gimbal', '闪光灯', '补光灯'] },
+      { icon: '🎮', kw: ['switch', 'ps5', 'ps4', 'xbox', 'steam deck', 'steamdeck', '游戏机', '手柄', '掌机', 'psp', 'rog ally'] },
+      { icon: '⌨️', kw: ['键盘', 'keyboard', '客制化'] },
+      { icon: '🖱️', kw: ['鼠标', 'mouse'] },
+      { icon: '🖥️', kw: ['显示器', 'monitor', '屏幕', 'display', '带鱼屏'] },
+      { icon: '📟', kw: ['平板', 'ipad', 'tablet', 'matepad', 'pad pro', 'pad air'] },
+      { icon: '💻', kw: ['笔记本', '电脑', 'laptop', 'macbook', '拯救者', 'thinkpad', '戴尔', 'dell', '华硕', 'asus', '微星', 'msi', '游戏本', 'notebook', 'matebook', '幻'] },
+      { icon: '📺', kw: ['电视', '投影', 'projector', '投影仪'] },
+      { icon: '🔊', kw: ['音箱', '音响', 'speaker', 'soundbar', '回音壁', '低音炮'] },
+      { icon: '📱', kw: ['手机', 'phone', 'iphone', 'redmi', 'mate', 'pixel', 'galaxy', 'oppo', 'vivo', '一加', 'oneplus', '荣耀', 'honor', '华为', '小米', '三星', 'realme', '魅族'] },
+      { icon: '🖊️', kw: ['钢笔', 'apple pencil', 'pencil', '手写笔'] },
+      { icon: '📚', kw: ['kindle', '电纸书', '阅读器', '书'] },
+      { icon: '🎒', kw: ['背包', '双肩包', '书包', 'bag', '钱包', '卡包'] },
+      { icon: '👟', kw: ['球鞋', '运动鞋', '跑鞋', 'sneaker', 'aj', '靴', '鞋'] },
+      { icon: '👕', kw: ['外套', '卫衣', '夹克', '羽绒', '衬衫', 't恤', '大衣', '毛衣', '裤'] },
+      { icon: '🚲', kw: ['自行车', '单车', '山地车', '公路车', 'bike', '骑行'] },
+      { icon: '🛵', kw: ['电动车', '摩托', '滑板车', '电瓶车', 'scooter'] },
+      { icon: '🚗', kw: ['汽车', '轿车', 'suv', '特斯拉', 'tesla'] },
+      { icon: '🪑', kw: ['人体工学', '升降桌', '沙发', '椅', '桌', '床', '柜', '家具'] },
+      { icon: '🏠', kw: ['冰箱', '洗衣机', '空调', '电饭煲', '微波炉', '扫地机', '吸尘器', '净化器', '加湿器', '风扇', '烤箱', '电水壶'] },
+      { icon: '💍', kw: ['戒指', '项链', '手链', '手镯', '耳环', '饰品', '手串'] },
+      { icon: '🛠️', kw: ['工具', '螺丝刀', '电钻', '扳手'] }
+    ];
+
+    function guessCategoryIcon(name) {
+      const n = (name || '').toLowerCase();
+      for (const cat of CATEGORY_ICONS) {
+        if (cat.kw.some(k => n.includes(k))) return cat.icon;
+      }
+      return '📦';
+    }
+
+    function iconFor(asset) {
+      return (asset.icon && asset.icon.trim()) ? asset.icon.trim() : guessCategoryIcon(asset.name);
     }
 
     function formatCurrency(value) {
@@ -899,7 +960,7 @@
               <div class="asset-days-label">${daysLabel}</div>
             </div>
             <div class="asset-info">
-              <div class="asset-name">${escapeHtml(asset.name)}</div>
+              <div class="asset-name"><span class="asset-icon">${escapeHtml(iconFor(asset))}</span>${escapeHtml(asset.name)}</div>
               <div class="asset-meta">
                 <span class="status-badge status-${m.status}">${STATUS_LABELS[m.status] || '正在使用'}</span>
                 <span>${asset.date}</span>
@@ -928,6 +989,7 @@
     const deleteBtn = document.getElementById('deleteBtn');
     const modalTitle = document.getElementById('modalTitle');
     const assetNameInput = document.getElementById('assetName');
+    const assetIconInput = document.getElementById('assetIcon');
     const assetPriceInput = document.getElementById('assetPrice');
     const assetDateInput = document.getElementById('assetDate');
     const assetStatusInput = document.getElementById('assetStatus');
@@ -976,6 +1038,7 @@
       editingId = id;
       modalTitle.textContent = '编辑资产';
       assetNameInput.value = asset.name;
+      assetIconInput.value = asset.icon || '';
       assetPriceInput.value = asset.price;
       assetDateInput.value = asset.date;
       assetStatusInput.value = asset.status || 'using';
@@ -1000,6 +1063,7 @@
       e.preventDefault();
       
       const name = assetNameInput.value.trim();
+      const icon = assetIconInput.value.trim().slice(0, 4);
       const price = parseFloat(assetPriceInput.value);
       const date = assetDateInput.value;
       const status = assetStatusInput.value || 'using';
@@ -1016,6 +1080,7 @@
         const asset = assets.find(a => a.id === editingId);
         if (asset) {
           asset.name = name;
+          asset.icon = icon;
           asset.price = price;
           asset.date = date;
           asset.status = status;
@@ -1027,6 +1092,7 @@
         assets.push({
           id: generateId(),
           name,
+          icon,
           price,
           date,
           status,
@@ -1100,6 +1166,7 @@
             .map(x => ({
               id: String(x.id || generateId()),
               name: String(x.name).trim(),
+              icon: (typeof x.icon === 'string') ? x.icon.trim().slice(0, 4) : '',
               price: parseFloat(x.price),
               date: x.date,
               status: STATUS_LABELS[x.status] ? x.status : 'using',
@@ -1184,6 +1251,95 @@
       alert('已清除 API Key');
     });
 
+    // 一键用 DeepSeek 整理所有物品名称 + 配图标
+    const aiCleanupBtn = document.getElementById('aiCleanupBtn');
+
+    async function aiCleanupNames() {
+      const key = localStorage.getItem(API_KEY_KEY);
+      if (!key) {
+        alert('请先在上方填入并保存 DeepSeek API Key');
+        return;
+      }
+      if (assets.length === 0) {
+        alert('暂无物品可整理');
+        return;
+      }
+      if (!confirm(`将用 AI 整理 ${assets.length} 件物品的名称与图标，整理后会覆盖现有名称。\n建议先「导出备份」。是否继续？`)) {
+        return;
+      }
+
+      const model = localStorage.getItem(API_MODEL_KEY) || DEFAULT_MODEL;
+      const original = aiCleanupBtn.textContent;
+      aiCleanupBtn.disabled = true;
+      aiCleanupBtn.textContent = '整理中…';
+
+      try {
+        const payload = assets.map(a => ({ id: a.id, name: a.name }));
+        const prompt = '你会收到一个 JSON 数组，元素为 {id, name}，name 是可能冗长杂乱的物品名称。'
+          + '请为每件物品生成更简洁规范的名称，并选择一个最贴切的单个 emoji 作为品类图标。'
+          + '名称要求：保留品牌 + 型号 + 关键规格，去掉营销词、颜色、赠品、促销等冗余，尽量不超过 20 个字。'
+          + '只返回 JSON 对象，格式：{"items":[{"id":"原样返回","name":"简洁名称","icon":"📷"}]}，不要任何解释。\n\n输入：\n'
+          + JSON.stringify(payload);
+
+        const res = await fetch('https://api.deepseek.com/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+          body: JSON.stringify({
+            model,
+            temperature: 0,
+            response_format: { type: 'json_object' },
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+
+        if (!res.ok) {
+          const t = await res.text().catch(() => '');
+          throw new Error('接口返回 ' + res.status + (t ? '：' + t.slice(0, 160) : ''));
+        }
+
+        const result = await res.json();
+        const content = result && result.choices && result.choices[0]
+          && result.choices[0].message && result.choices[0].message.content;
+        if (!content) throw new Error('未获得有效结果');
+
+        let obj;
+        try { obj = JSON.parse(content); }
+        catch (e) {
+          const mm = content.match(/\{[\s\S]*\}/);
+          obj = mm ? JSON.parse(mm[0]) : null;
+        }
+        const items = obj && Array.isArray(obj.items) ? obj.items : [];
+        if (items.length === 0) throw new Error('AI 未返回有效结果');
+
+        const byId = new Map(items.map(it => [String(it.id), it]));
+        let changed = 0;
+        assets.forEach(a => {
+          const it = byId.get(String(a.id));
+          if (!it) return;
+          if (typeof it.name === 'string' && it.name.trim()) {
+            a.name = it.name.trim();
+            changed++;
+          }
+          if (typeof it.icon === 'string' && it.icon.trim()) {
+            a.icon = it.icon.trim().slice(0, 4);
+          }
+        });
+
+        saveAssets();
+        updateUI();
+        alert(`整理完成，更新了 ${changed} 件物品。`);
+        closeSettings();
+      } catch (err) {
+        alert('整理失败：' + err.message
+          + '\n\n若为网络 / CORS 错误，说明浏览器无法直连 DeepSeek，需改用后端代理。');
+      } finally {
+        aiCleanupBtn.disabled = false;
+        aiCleanupBtn.textContent = original;
+      }
+    }
+
+    aiCleanupBtn.addEventListener('click', aiCleanupNames);
+
     // ==================== 截图识别（本机 OCR + DeepSeek 整理） ====================
     const ocrBtn = document.getElementById('ocrBtn');
     const ocrFile = document.getElementById('ocrFile');
@@ -1263,6 +1419,7 @@
       modalTitle.textContent = '确认导入资产';
       assetForm.reset();
       assetNameInput.value = data.name || '';
+      assetIconInput.value = '';
       assetPriceInput.value = data.price || '';
       assetDateInput.value = data.date || getTodayDate();
       assetStatusInput.value = 'using';
